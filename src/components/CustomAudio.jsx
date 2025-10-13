@@ -45,33 +45,37 @@ export default function CustomAudioPlayer({ src }) {
   };
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-gray-100 rounded-xl shadow-sm w-full max-w-md">
-      <button
-        onClick={togglePlay}
-        className="p-2 rounded-full bg-white shadow hover:bg-gray-50"
-      >
-        {isPlaying ? (
-          <Pause className="text-blue-600 w-5 h-5" />
-        ) : (
-          <Play className="text-blue-600 w-5 h-5" />
-        )}
-      </button>
+    <div className="flex flex-col items-center gap-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-xl shadow-sm w-full max-w-md">
+      {/* 🔘 Bouton + Barre de progression */}
+      <div className="flex items-center gap-3 w-full">
+        <button
+          onClick={togglePlay}
+          className="p-2 rounded-full bg-white dark:bg-gray-700 shadow hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+        >
+          {isPlaying ? (
+            <Pause className="text-blue-600 w-5 h-5" />
+          ) : (
+            <Play className="text-blue-600 w-5 h-5" />
+          )}
+        </button>
 
-      <div className="flex-1">
         <input
           type="range"
           min="0"
           max="100"
           value={progress}
           onChange={handleSeek}
-          className="w-full accent-blue-600 cursor-pointer"
+          className="flex-1 accent-blue-600 cursor-pointer"
         />
-        <div className="text-xs text-gray-500 mt-1 flex justify-between">
-          <span>{formatTime((progress / 100) * duration)}</span>
-          <span>{formatTime(duration)}</span>
-        </div>
       </div>
 
+      {/* 🕓 Temps écoulé / total */}
+      <div className="text-xs text-gray-500 dark:text-gray-400 w-full flex justify-between">
+        <span>{formatTime((progress / 100) * duration)}</span>
+        <span>{formatTime(duration)}</span>
+      </div>
+
+      {/* 🎵 Élément audio caché */}
       <audio ref={audioRef} src={src} preload="metadata" hidden />
     </div>
   );

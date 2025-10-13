@@ -108,151 +108,153 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-center bg-gradient-to-br from-green-50 via-white to-green-100 p-4">
-      <div className="w-full max-w-5xl bg-white rounded-3xl shadow-xl flex flex-col md:flex-row gap-8 p-6">
-        
-        {/* Avatar */}
-        <div className="flex flex-col items-center flex-1">
-          <div className="relative group">
-            <img
-              src={preview || "/image.png"}
-              alt="Avatar"
-              className="w-40 h-40 rounded-full border-4 border-green-400 shadow-xl object-cover transition-transform hover:scale-105"
+<div className="min-h-screen flex justify-center items-center bg-gradient-to-br from-green-50 via-white to-green-100 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900 p-4 transition-colors duration-300">
+  <div className="w-full max-w-5xl bg-white dark:bg-gray-800 rounded-3xl shadow-xl flex flex-col md:flex-row gap-8 p-6 transition-all duration-300">
+    
+    {/* Avatar */}
+    <div className="flex flex-col items-center flex-1">
+      <div className="relative group">
+        <img
+          src={preview || "/image.png"}
+          alt="Avatar"
+          className="w-40 h-40 rounded-full border-4 border-green-400 dark:border-green-500 shadow-xl object-cover transition-transform hover:scale-105"
+        />
+        <label className="absolute bottom-2 right-2 bg-green-500 hover:bg-green-600 text-white p-3 rounded-full cursor-pointer transition-all shadow-lg flex items-center justify-center">
+          <FaCamera className="text-lg" />
+          <input type="file" name="avatar" accept="image/*" className="hidden" onChange={handleChange} />
+        </label>
+      </div>
+      <h3 className="mt-4 text-2xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+        <FaUser className="text-green-500" /> {formData.username}
+      </h3>
+      <p className="text-gray-500 dark:text-gray-400 flex items-center gap-2">
+        <FaEnvelope className="text-green-500" /> {formData.email}
+      </p>
+      <button
+        onClick={logout}
+        className="mt-5 flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-full shadow-lg transition-all"
+      >
+        <FaTimes /> Déconnexion
+      </button>
+    </div>
+
+    {/* Infos & Sécurité */}
+    <div className="flex-1 w-full flex flex-col gap-6">
+      
+      {/* Infos */}
+      <div>
+        <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <FaUser className="text-green-500" /> Informations
+        </h2>
+        {!editInfo ? (
+          <div className="bg-green-50 dark:bg-gray-700 p-4 rounded-xl shadow-sm relative flex flex-col gap-3 transition-all">
+            <button
+              onClick={() => setEditInfo(true)}
+              className="absolute top-3 right-3 text-green-500 hover:text-green-700 dark:hover:text-green-400"
+            >
+              <FaEdit />
+            </button>
+            <p className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+              <FaUser className="text-green-500" /> {formData.username}
+            </p>
+            <p className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+              <FaEnvelope className="text-green-500" /> {formData.email}
+            </p>
+          </div>
+        ) : (
+          <form onSubmit={handleInfoSubmit} className="bg-green-50 dark:bg-gray-700 p-4 rounded-xl flex flex-col gap-4 transition-all">
+            <input
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              placeholder="Nom d’utilisateur"
+              className="w-full p-3 border border-green-200 dark:border-gray-600 rounded-lg focus:ring focus:ring-green-300 dark:bg-gray-800 dark:text-gray-100"
             />
-            <label className="absolute bottom-2 right-2 bg-green-500 hover:bg-green-600 text-white p-3 rounded-full cursor-pointer transition-all shadow-lg flex items-center justify-center">
-              <FaCamera className="text-lg" />
-              <input type="file" name="avatar" accept="image/*" className="hidden" onChange={handleChange} />
-            </label>
-          </div>
-          <h3 className="mt-4 text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <FaUser className="text-green-500" /> {formData.username}
-          </h3>
-          <p className="text-gray-500 flex items-center gap-2">
-            <FaEnvelope className="text-green-500" /> {formData.email}
-          </p>
-          <button
-            onClick={logout}
-            className="mt-5 flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-full shadow-lg transition-all"
-          >
-            <FaTimes /> Déconnexion
-          </button>
-        </div>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Email"
+              className="w-full p-3 border border-green-200 dark:border-gray-600 rounded-lg focus:ring focus:ring-green-300 dark:bg-gray-800 dark:text-gray-100"
+            />
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                disabled={loading.info}
+                className="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-all flex justify-center items-center gap-2"
+              >
+                <FaCheck /> {loading.info ? "Mise à jour..." : "Sauvegarder"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditInfo(false)}
+                className="flex-1 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-100 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-all flex justify-center items-center gap-2"
+              >
+                <FaTimes /> Annuler
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
 
-        {/* Infos & Sécurité */}
-        <div className="flex-1 w-full flex flex-col gap-6">
-          
-          {/* Infos */}
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <FaUser className="text-green-500" /> Informations
-            </h2>
-            {!editInfo ? (
-              <div className="bg-green-50 p-4 rounded-xl shadow-sm relative flex flex-col gap-3">
-                <button
-                  onClick={() => setEditInfo(true)}
-                  className="absolute top-3 right-3 text-green-500 hover:text-green-700"
-                >
-                  <FaEdit />
-                </button>
-                <p className="flex items-center gap-2 text-gray-700">
-                  <FaUser className="text-green-500" /> {formData.username}
-                </p>
-                <p className="flex items-center gap-2 text-gray-700">
-                  <FaEnvelope className="text-green-500" /> {formData.email}
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleInfoSubmit} className="bg-green-50 p-4 rounded-xl flex flex-col gap-4">
-                <input
-                  type="text"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  placeholder="Nom d’utilisateur"
-                  className="w-full p-3 border border-green-200 rounded-lg focus:ring focus:ring-green-300"
-                />
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Email"
-                  className="w-full p-3 border border-green-200 rounded-lg focus:ring focus:ring-green-300"
-                />
-                <div className="flex gap-3">
-                  <button
-                    type="submit"
-                    disabled={loading.info}
-                    className="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-all flex justify-center items-center gap-2"
-                  >
-                    <FaCheck /> {loading.info ? "Mise à jour..." : "Sauvegarder"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditInfo(false)}
-                    className="flex-1 bg-gray-200 py-2 rounded-lg hover:bg-gray-300 transition-all flex justify-center items-center gap-2"
-                  >
-                    <FaTimes /> Annuler
-                  </button>
-                </div>
-              </form>
-            )}
+      {/* Sécurité */}
+      <div>
+        <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <FaLock className="text-green-500" /> Sécurité
+        </h2>
+        {!editPassword ? (
+          <div className="bg-green-50 dark:bg-gray-700 p-4 rounded-xl shadow-sm relative flex items-center gap-2 transition-all">
+            <button
+              onClick={() => setEditPassword(true)}
+              className="absolute top-3 right-3 text-green-500 hover:text-green-700 dark:hover:text-green-400"
+            >
+              <FaEdit />
+            </button>
+            <FaLock className="text-green-500" /> <span className="text-gray-700 dark:text-gray-200">••••••••</span>
           </div>
-
-          {/* Sécurité */}
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <FaLock className="text-green-500" /> Sécurité
-            </h2>
-            {!editPassword ? (
-              <div className="bg-green-50 p-4 rounded-xl shadow-sm relative flex items-center gap-2">
-                <button
-                  onClick={() => setEditPassword(true)}
-                  className="absolute top-3 right-3 text-green-500 hover:text-green-700"
-                >
-                  <FaEdit />
-                </button>
-                <FaLock className="text-green-500" /> ••••••••
-              </div>
-            ) : (
-              <form onSubmit={handlePasswordSubmit} className="bg-green-50 p-4 rounded-xl flex flex-col gap-4">
-                <input
-                  type="password"
-                  name="currentPassword"
-                  value={formData.currentPassword}
-                  onChange={handleChange}
-                  placeholder="Mot de passe actuel"
-                  className="w-full p-3 border border-green-200 rounded-lg focus:ring focus:ring-green-300"
-                />
-                <input
-                  type="password"
-                  name="newPassword"
-                  value={formData.newPassword}
-                  onChange={handleChange}
-                  placeholder="Nouveau mot de passe"
-                  className="w-full p-3 border border-green-200 rounded-lg focus:ring focus:ring-green-300"
-                />
-                <div className="flex gap-3">
-                  <button
-                    type="submit"
-                    disabled={loading.password}
-                    className="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-all flex justify-center items-center gap-2"
-                  >
-                    <FaCheck /> {loading.password ? "Mise à jour..." : "Sauvegarder"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditPassword(false)}
-                    className="flex-1 bg-gray-200 py-2 rounded-lg hover:bg-gray-300 transition-all flex justify-center items-center gap-2"
-                  >
-                    <FaTimes /> Annuler
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
+        ) : (
+          <form onSubmit={handlePasswordSubmit} className="bg-green-50 dark:bg-gray-700 p-4 rounded-xl flex flex-col gap-4 transition-all">
+            <input
+              type="password"
+              name="currentPassword"
+              value={formData.currentPassword}
+              onChange={handleChange}
+              placeholder="Mot de passe actuel"
+              className="w-full p-3 border border-green-200 dark:border-gray-600 rounded-lg focus:ring focus:ring-green-300 dark:bg-gray-800 dark:text-gray-100"
+            />
+            <input
+              type="password"
+              name="newPassword"
+              value={formData.newPassword}
+              onChange={handleChange}
+              placeholder="Nouveau mot de passe"
+              className="w-full p-3 border border-green-200 dark:border-gray-600 rounded-lg focus:ring focus:ring-green-300 dark:bg-gray-800 dark:text-gray-100"
+            />
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                disabled={loading.password}
+                className="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-all flex justify-center items-center gap-2"
+              >
+                <FaCheck /> {loading.password ? "Mise à jour..." : "Sauvegarder"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditPassword(false)}
+                className="flex-1 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-100 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-all flex justify-center items-center gap-2"
+              >
+                <FaTimes /> Annuler
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
+  </div>
+</div>
+
+
   );
 }
