@@ -557,13 +557,21 @@ function formatTimeLastMessage(dateString) {
                 }`}
               >
                 <span className="truncate flex-1 min-w-0">
-                  {isSentByCurrentUser && lastMsg && (
-                    lastMsg.seen ? (
-                      <span className="text-blue-500 text-xs mr-1 shrink-0">✓✓</span>
-                    ) : (
-                      <span className="text-gray-400 text-xs mr-1 shrink-0">✓</span>
-                    )
-                  )}
+                 {lastMsg && (
+                              <span className="ml-1">
+                                         {isSentByCurrentUser ? (
+                               // --- Si le message a été envoyé par l'utilisateur courant
+                               lastMsg.seen ? (
+                                   <span className="text-blue-500 text-xs mr-1 shrink-0">✓✓</span> // lu = bleu
+                                ) : other.status === "online" ? (
+                                <span className="text-gray-400 text-xs mr-1 shrink-0">✓✓</span> // non lu + online = gris double
+                                   ) : (
+                                   <span className="text-gray-400 text-xs mr-1 shrink-0">✓</span> // non lu + offline = gris simple
+                                   )
+                                      ) : null}
+                                       </span>
+                              )}
+
                   <span className="truncate inline-block max-w-[160px] align-middle">
                     {lastMsg?.content
                       ? lastMsg.content
