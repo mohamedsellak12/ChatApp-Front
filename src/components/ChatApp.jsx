@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import { IoArrowBack, IoSettingsOutline } from "react-icons/io5";
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
-import { Check, Divide, Edit2, Search, Trash2 } from "lucide-react";
+import { Check, Divide, Edit2, FileText, Image, Music, Search, Trash2, Video } from "lucide-react";
 import { Paperclip, X } from "lucide-react";
 import CustomAudio from "./CustomAudio";
 import CustomVideoPlayer from "./CustomVideoPlayer";
@@ -395,12 +395,7 @@ const handleUpdateMessage = () => {
       content: editContent.trim(),
     });
 
-    // Facultatif : maj locale optimiste
-    // setMessages((prev) =>
-    //   prev.map((m) =>
-    //     m._id === editingMessage._id ? { ...m, content: editContent } : m
-    //   )
-    // );
+  
 
     cancelEdit();
   };
@@ -501,30 +496,36 @@ function formatTimeLastMessage(dateString) {
 </div>
 
 
-    {/* --- Onglets --- */}
-    <div className="flex border-b border-gray-200 dark:border-gray-700">
-      <button
-        className={`flex-1 p-2 text-sm font-medium transition ${
-          viewList === "users"
-            ? "bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-200"
-            : "hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
-        }`}
-        onClick={() => setViewList("users")}
-      >
-        Utilisateurs
-      </button>
-      
-      <button
-        className={`flex-1 p-2 text-sm font-medium transition ${
-          viewList === "conversations"
-            ? "bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-200"
-            : "hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
-        }`}
-        onClick={() => setViewList("conversations")}
-      >
-        Conversations {totalUnread>0 &&(<span>({totalUnread})</span>)}
-      </button>
-    </div>
+   {/* --- Onglets --- */}
+<div className="flex border-b border-gray-200 dark:border-gray-700">
+  <button
+    className={`flex-1 p-2 text-sm font-medium transition 
+      ${viewList === "users" 
+        ? "border-b-2 border-green-500 text-green-700 dark:text-green-200" 
+        : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+      }`}
+    onClick={() => {
+        loadUsers()
+        setViewList("users")}}
+  >
+    Utilisateurs
+  </button>
+
+  <button
+    className={`flex-1 p-2 text-sm font-medium transition 
+      ${viewList === "conversations" 
+        ? "border-b-2 border-green-500 text-green-700 dark:text-green-200" 
+        : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+      }`}
+    onClick={() =>{
+        loadConversations()
+        setViewList("conversations")
+    } }
+  >
+    Conversations {totalUnread > 0 && <span>({totalUnread})</span>}
+  </button>
+</div>
+
 
     {/* --- Liste utilisateurs --- */}
     {viewList === "users" && (
@@ -645,43 +646,51 @@ function formatTimeLastMessage(dateString) {
                               )}
 
                  
-              <span className="truncate inline-block max-w-[160px] align-middle">
-                    {(() => {
-                 const hasAttachment = lastMsg?.attachments?.length > 0;
-                 const hasText = lastMsg?.content?.trim()?.length > 0;
-                 let attachmentLabel = "";
+            <span className="truncate inline-block max-w-[160px] align-middle">
+  {(() => {
+    const hasAttachment = lastMsg?.attachments?.length > 0;
+    const hasText = lastMsg?.content?.trim()?.length > 0;
 
-                if (hasAttachment) {
-               const type = lastMsg.attachments[0].type;
-                switch (type) {
-                case "image":
-                  attachmentLabel = "📷 Photo";
-                        break;
-                case "video":
-                   attachmentLabel = "🎬 Vidéo";
-                    break;
-                case "audio":
-                   attachmentLabel = "🎧 Audio";
-                     break;
-                case "pdf":
-                   attachmentLabel = "📄 PDF";
-                      break;
-                default:
-                    attachmentLabel = "📎 Fichier";
-                }
-              }
+    if (hasAttachment) {
+      const type = lastMsg.attachments[0].type;
+      let AttachmentIcon = FileText;
+      let typeLabel = "Fichier";
 
-             if (hasAttachment && hasText) {
-                     return `${attachmentLabel} ${lastMsg.content}`;
-                } else if (hasAttachment) {
-                       return attachmentLabel;
-                 } else if (hasText) {
-                     return lastMsg.content;
-                 } else {
-                      return "Aucun message";
-                 }
-             })()}
-             </span>
+      switch (type) {
+        case "image":
+          AttachmentIcon = Image;
+          typeLabel = "Photo";
+          break;
+        case "video":
+          AttachmentIcon = Video;
+          typeLabel = "Vidéo";
+          break;
+        case "audio":
+          AttachmentIcon = Music;
+          typeLabel = "Audio";
+          break;
+        case "pdf":
+          AttachmentIcon = FileText;
+          typeLabel = "PDF";
+          break;
+        default:
+          AttachmentIcon = FileText;
+          typeLabel = "Fichier";
+      }
+
+      return (
+        <span className="inline-flex items-center gap-1">
+          <AttachmentIcon className="w-4 h-4 text-blue-500" />
+          {hasText ? lastMsg.content : typeLabel}
+        </span>
+      );
+    } else if (hasText) {
+      return lastMsg.content;
+    } else {
+      return "Aucun message";
+    }
+  })()}
+</span>
 
                 </span>}
                 {lastMsg && (
@@ -723,7 +732,9 @@ function formatTimeLastMessage(dateString) {
         <IoArrowBack
           className="cursor-pointer text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white"
           size={24}
-          onClick={() => setSelectedUser(null)}
+          onClick={() =>{ 
+            setSelectedUser(null)
+             loadConversations()}}
         />
       )}
 
@@ -787,11 +798,11 @@ function formatTimeLastMessage(dateString) {
 
   return (
     <div key={i}
-      onClick={() => isSender && toggleSelectMessage(msg._id)}
+      onClick={() => isSender && setSelectedMessageId(null) }
+      onDoubleClick={()=>isSender && toggleSelectMessage(msg._id)}
       className={`flex flex-col mb-2 ${isSender ? "items-end" : "items-start"}`}
     >
-      <div
-        className={`relative px-4 py-2 rounded-2xl max-w-[80%] break-words shadow-sm cursor-pointer transition ${
+      <div className={`relative  px-3 py-1.5 rounded-2xl max-w-[80%] break-words shadow-sm cursor-pointer transition ${
           isSender
             ? "bg-green-500 text-white rounded-br-none"
             : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-bl-none"
@@ -799,7 +810,7 @@ function formatTimeLastMessage(dateString) {
       >
         {/* --- Attachments --- */}
         {msg.attachments?.length > 0 && (
-          <div className="mt-2 flex flex-col gap-2">
+          <div className=" flex flex-col ">
             {msg.attachments.map((att, index) => {
               const type = att.type;
               const url = `http://localhost:5000${att.url}`;
@@ -933,7 +944,7 @@ function formatTimeLastMessage(dateString) {
       {showScrollButton && (
         <button
           onClick={scrollToBottom}
-          className="fixed bottom-24 right-8 bg-green-500 text-white p-2 rounded-full shadow-lg hover:bg-green-600 transition-transform transform hover:scale-110"
+          className="fixed bottom-24 right-8 bg-white dark:bg-gray-800  p-2 rounded-full shadow-lg  transition-transform transform hover:scale-110"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
