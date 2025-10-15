@@ -455,34 +455,51 @@ function formatTimeLastMessage(dateString) {
      {/* --- 🧭 SIDEBAR --- */}
 {(!isMobileView || !selectedUser) && (
   <div className="md:w-1/3 w-full h-full bg-white dark:bg-gray-800 flex flex-col border-r dark:border-gray-700 shadow-sm">
-    <div className="flex items-center justify-between p-4 border-b bg-white dark:bg-gray-800 dark:border-gray-700">
-      <h1 className="flex items-center gap-2 text-xl font-bold text-gray-800 dark:text-gray-100 select-none">
-        <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 shadow-md">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="white"
-            className="w-5 h-5"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M7 8h10M7 12h6m5 8l-2-2H7a2 2 0 01-2-2V6a2 
-              2 0 012-2h10a2 2 0 012 2v12z"
-            />
-          </svg>
-        </span>
-        <span className="bg-gradient-to-r from-green-600 via-emerald-500 to-green-700 bg-clip-text text-transparent tracking-wide">
-          ChatApp
-        </span>
-      </h1>
+   {/* Header */}
+<div className="flex items-center justify-between p-4 border-b bg-white dark:bg-gray-800 dark:border-gray-800">
+  {/* --- Logo + Nom du projet --- */}
+  <h1 className="flex items-center gap-3 text-xl font-bold text-gray-800 dark:text-gray-100 select-none">
+    {/* --- Logo icon (power + chat bubble) --- */}
+    <span className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-md">
+      {/* Cercle externe (power button) */}
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="white"
+        strokeWidth={2}
+        className="w-5 h-5"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M12 3v9m6.364-3.364A9 9 0 116.343 6.343"
+        />
+      </svg>
 
-      <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
-        <SettingsMenu/>
-      </button>
-    </div>
+      {/* Petite bulle de chat interne */}
+      {/* <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="white"
+        viewBox="0 0 24 24"
+        className="absolute bottom-[3px] right-[3px] w-2.5 h-2.5 opacity-90"
+      >
+        <path d="M2 8a6 6 0 016-6h8a6 6 0 016 6v4a6 6 0 01-6 6H9l-4 3v-3a6 6 0 01-3-6V8z" />
+      </svg> */}
+    </span>
+
+    {/* --- Nom stylisé --- */}
+    <span className="bg-gradient-to-r from-green-500 via-emerald-400 to-green-600 bg-clip-text text-transparent tracking-wider">
+      OnTalk
+    </span>
+  </h1>
+
+  {/* --- Bouton paramètres --- */}
+  <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+    <SettingsMenu />
+  </button>
+</div>
+
 
     {/* --- Onglets --- */}
     <div className="flex border-b border-gray-200 dark:border-gray-700">
@@ -628,32 +645,58 @@ function formatTimeLastMessage(dateString) {
                               )}
 
                  
-                  <span className="truncate inline-block max-w-[160px] align-middle">
-                    {lastMsg?.content
-                      ? lastMsg.content
-                      : lastMsg?.attachments?.length > 0
-                      ? lastMsg.attachments[0].type === "image"
-                        ? "📷 Photo"
-                        : lastMsg.attachments[0].type === "video"
-                        ? "🎬 Vidéo"
-                        : lastMsg.attachments[0].type === "audio"
-                        ? "🎧 Audio"
-                        : "📎 Fichier"
-                      : "Aucun message"}
-                  </span>
+              <span className="truncate inline-block max-w-[160px] align-middle">
+                    {(() => {
+                 const hasAttachment = lastMsg?.attachments?.length > 0;
+                 const hasText = lastMsg?.content?.trim()?.length > 0;
+                 let attachmentLabel = "";
+
+                if (hasAttachment) {
+               const type = lastMsg.attachments[0].type;
+                switch (type) {
+                case "image":
+                  attachmentLabel = "📷 Photo";
+                        break;
+                case "video":
+                   attachmentLabel = "🎬 Vidéo";
+                    break;
+                case "audio":
+                   attachmentLabel = "🎧 Audio";
+                     break;
+                case "pdf":
+                   attachmentLabel = "📄 PDF";
+                      break;
+                default:
+                    attachmentLabel = "📎 Fichier";
+                }
+              }
+
+             if (hasAttachment && hasText) {
+                     return `${attachmentLabel} ${lastMsg.content}`;
+                } else if (hasAttachment) {
+                       return attachmentLabel;
+                 } else if (hasText) {
+                     return lastMsg.content;
+                 } else {
+                      return "Aucun message";
+                 }
+             })()}
+             </span>
+
                 </span>}
                 {lastMsg && (
                   <span className="ml-2 text-xs text-gray-400 dark:text-gray-300 shrink-0 whitespace-nowrap">
                     {formatTimeLastMessage(lastMsg.createdAt)}
                   </span>
                 )}
-                {conv.unreadCount > 0 && !isSelected && isUnread && (
+               
+              </div>
+            </div>
+             {conv.unreadCount > 0 && !isSelected && isUnread && (
                       <span className="ml-2 bg-green-500 text-white text-xs font-bold rounded-full px-2 py-0.5">
                    {conv.unreadCount}
                        </span>
                   )}
-              </div>
-            </div>
             {/* {isUnread && !isSelected && <span className="w-2.5 h-2.5 bg-green-500 rounded-full"></span>} */}
           </li>
         );
@@ -707,7 +750,7 @@ function formatTimeLastMessage(dateString) {
     </div>
 
     {/* --- MESSAGES SCROLLABLE --- */}
-    <div className="flex-1 overflow-y-auto px-4 py-3" onScroll={handleScroll}>
+    <div className="flex-1 overflow-y-auto px-4 py-3"  onScroll={handleScroll}>
       {Object.entries(
         messages.reduce((groups, msg) => {
           const date = new Date(msg.createdAt);
@@ -730,7 +773,7 @@ function formatTimeLastMessage(dateString) {
           return groups;
         }, {})
       ).map(([day, msgs]) => (
-        <div key={day} className="mb-4">
+        <div key={day} className="mb-4" >
           {/* --- Séparateur de date --- */}
           <div className="mx-auto my-2 px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-xs rounded-full border border-gray-300 dark:border-gray-600 w-max">
             {day}
@@ -805,6 +848,7 @@ function formatTimeLastMessage(dateString) {
         onClick={(e) => {
           e.stopPropagation();
           handleUpdateMessage(msg._id, editContent);
+          toggleSelectMessage(msg._id)
         }}
         className="p-1.5 rounded-full bg-green-500 hover:bg-green-600 text-white transition"
         title="Enregistrer"
@@ -816,6 +860,7 @@ function formatTimeLastMessage(dateString) {
         onClick={(e) => {
           e.stopPropagation();
           setEditingMessage(null);
+          toggleSelectMessage(msg._id)
         }}
         className="p-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white transition"
         title="Annuler"
@@ -825,7 +870,7 @@ function formatTimeLastMessage(dateString) {
      </div>
    </div>
   )  : (
-          msg.content && <p className="text-sm">{msg.content}</p>
+          msg.content && <p className="text-sm mt-2">{msg.content}</p>
         )}
 
         {/* --- Heure + Vu --- */}
@@ -956,45 +1001,48 @@ function formatTimeLastMessage(dateString) {
     </div>
   </div>
 ) : !isMobileView ? (
-  <div className="flex items-center justify-center h-full w-3/4 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-    <div className="flex flex-col items-center justify-center text-center select-none">
-      {/* Halo animé */}
-      <div className="relative">
-        <div className="absolute inset-0 bg-green-400 rounded-full blur-3xl opacity-30 animate-pulse"></div>
+ <div className="flex items-center justify-center h-full w-3/4 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+  <div className="flex flex-col items-center justify-center text-center select-none">
+    {/* --- Halo animé --- */}
+    <div className="relative">
+      <div className="absolute inset-0 bg-emerald-400 rounded-full blur-3xl opacity-25 animate-pulse"></div>
 
-        {/* Icône principale */}
-        <div className="relative flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 shadow-xl">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="white"
-            className="w-12 h-12"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M7 8h10M7 12h6m5 8l-2-2H7a2 2 0 01-2-2V6a2 
-              2 0 012-2h10a2 2 0 012 2v12z"
-            />
-          </svg>
-        </div>
+      {/* --- Logo OnTalk --- */}
+      <div className="relative flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-2xl">
+        {/* Power icon */}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="white"
+          strokeWidth={2}
+          className="w-12 h-12"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 3v9m6.364-3.364A9 9 0 116.343 6.343"
+          />
+        </svg>
+      
       </div>
-
-      {/* Texte principal */}
-      <h1 className="mt-5 text-4xl font-extrabold bg-gradient-to-r from-green-500 via-emerald-500 to-green-700 bg-clip-text text-transparent tracking-wide">
-        ChatApp
-      </h1>
-
-      {/* Sous-texte animé */}
-      <p className="mt-2 text-gray-500 dark:text-gray-300 text-sm animate-fade-in">
-        Sélectionnez une conversation pour commencer le chat 💬
-      </p>
     </div>
-  </div>
-) : ""}
 
+    {/* --- Nom du projet --- */}
+    <h1 className="mt-5 text-4xl font-extrabold bg-gradient-to-r from-green-500 via-emerald-400 to-green-600 bg-clip-text text-transparent tracking-wide drop-shadow-sm">
+      OnTalk
+    </h1>
+
+    {/* --- Sous-texte --- */}
+    <p className="mt-3 text-gray-500 dark:text-gray-300 text-sm animate-fade-in">
+      Sélectionnez une conversation pour commencer à discuter 💬
+    </p>
+
+    {/* --- Ligne décorative subtile --- */}
+    <div className="mt-6 w-16 h-1 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full animate-pulse"></div>
+  </div>
+</div>
+) : ""}
     </div>
 
   );

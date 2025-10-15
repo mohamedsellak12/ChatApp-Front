@@ -31,7 +31,7 @@ export default function CustomPDFViewer({ src, name }) {
           <span className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate max-w-[140px] sm:max-w-[180px]">
             {name || "document.pdf"}
           </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
+          <span className="text-xs text-gray-500 dark:text-gray-400  sm:block">
             PDF File
           </span>
         </div>

@@ -14,7 +14,7 @@ export default function CustomImageViewer({ src, alt }) {
         <img
           src={src}
           alt={alt}
-          className="rounded-lg object-cover w-40 h-40 sm:w-48 sm:h-48 transition-transform duration-200 group-hover:scale-105 shadow-md"
+          className="rounded-lg object-cover w-full h-40 sm:w-48 sm:h-48 transition-transform duration-200 group-hover:scale-105 shadow-md"
         />
 
         {/* 🔍 Icône zoom au survol */}
