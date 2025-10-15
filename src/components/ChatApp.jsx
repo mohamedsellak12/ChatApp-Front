@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import { IoArrowBack, IoSettingsOutline } from "react-icons/io5";
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
-import { Divide, Search, Trash2 } from "lucide-react";
+import { Check, Divide, Edit2, Search, Trash2 } from "lucide-react";
 import { Paperclip, X } from "lucide-react";
 import CustomAudio from "./CustomAudio";
 import CustomVideoPlayer from "./CustomVideoPlayer";
@@ -11,10 +11,13 @@ import CustomImageViewer from "./CustomImageViewer";
 import CustomPDFViewer from "./CustomPDFViewer";
 import Avatar from "./Avatar";
 import SettingsMenu from "./SettingsMenu";
+import { useTheme } from "../context/ThemeContext";
 
 export default function ChatApp() {
   const { user } = useAuth();
   const socketRef = useRef(null);
+  const { darkMode } = useTheme();
+
 
   const [users, setUsers] = useState([]);
   const [conversations, setConversations] = useState([]);
@@ -33,9 +36,32 @@ export default function ChatApp() {
   const isTypingRef = useRef(false);
   const prevConversationRef = useRef(null);
   const messagesEndRef = useRef(null);
-//    const [fullScreenImage, setFullScreenImage] = useState(null);
+  const [editingMessage, setEditingMessage] = useState(null);
+  const [editContent, setEditContent] = useState("");
 
   const usersFiltered=users.filter(u=>u.username.toLowerCase().includes(query.toLowerCase()))
+
+  const unreadConvs = conversations.filter(conv => !conv.isReaded);
+const totalUnread = unreadConvs.length;
+
+
+
+
+ // 🔹 Commencer à éditer un message
+  const startEditMessage = (message) => {
+    setEditingMessage(message);
+    setEditContent(message.content);
+  };
+
+  // 🔹 Annuler la modification
+  const cancelEdit = () => {
+    setEditingMessage(null);
+    setEditContent("");
+  };
+
+   // 🔹 Sauvegarder les changements
+  
+
 
   // Détection mode mobile
   useEffect(() => {
@@ -202,12 +228,19 @@ const scrollToBottom = () => {
     setMessages(prev => prev.filter(m => m._id !== messageId));
     loadConversations()
   });
+  socket.on("messageUpdated", (updatedMessage) => {
+    setMessages((prev) =>
+      prev.map((m) => (m._id === updatedMessage._id ? updatedMessage : m))
+    );
+    loadConversations()
+  });
 
 
     return () => {
       if (currentConversationId) {
         socket.emit("stopTyping", { conversationId: currentConversationId });
         socket.emit("leaveConversation", currentConversationId);
+        
       }
       socket.disconnect();
       socketRef.current = null;
@@ -354,10 +387,28 @@ const scrollToBottom = () => {
   socketRef.current?.emit("deleteMessage", { messageId: msgId });
 
 };
+const handleUpdateMessage = () => {
+    if (!editingMessage || !editContent.trim()) return;
+
+    socketRef.current?.emit("updateMessage", {
+      messageId: editingMessage._id,
+      content: editContent.trim(),
+    });
+
+    // Facultatif : maj locale optimiste
+    // setMessages((prev) =>
+    //   prev.map((m) =>
+    //     m._id === editingMessage._id ? { ...m, content: editContent } : m
+    //   )
+    // );
+
+    cancelEdit();
+  };
 
   function formatTime(dateString) {
   return new Date(dateString).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
+
 function formatTimeLastMessage(dateString) {
   const date = new Date(dateString);
   const now = new Date();
@@ -445,6 +496,7 @@ function formatTimeLastMessage(dateString) {
       >
         Utilisateurs
       </button>
+      
       <button
         className={`flex-1 p-2 text-sm font-medium transition ${
           viewList === "conversations"
@@ -453,7 +505,7 @@ function formatTimeLastMessage(dateString) {
         }`}
         onClick={() => setViewList("conversations")}
       >
-        Conversations
+        Conversations {totalUnread>0 &&(<span>({totalUnread})</span>)}
       </button>
     </div>
 
@@ -548,6 +600,7 @@ function formatTimeLastMessage(dateString) {
                   other.status === "online" ? "bg-green-500" : "bg-gray-400 dark:bg-gray-500"
                 }`}
               ></span>
+             
             </div>
             <div className="flex-1 min-w-0">
               <div className="font-semibold truncate text-gray-800 dark:text-gray-100">{other.username}</div>
@@ -556,22 +609,25 @@ function formatTimeLastMessage(dateString) {
                   isUnread ? "text-black dark:text-gray-200 font-semibold" : "text-gray-500 dark:text-gray-300"
                 }`}
               >
+                   {
+                    other.typing ? <p className="text-green-500 animate-pulse">typing...</p>:
                 <span className="truncate flex-1 min-w-0">
                  {lastMsg && (
                               <span className="ml-1">
                                          {isSentByCurrentUser ? (
                                // --- Si le message a été envoyé par l'utilisateur courant
                                lastMsg.seen ? (
-                                   <span className="text-blue-500 text-xs mr-1 shrink-0">✓✓</span> // lu = bleu
+                                   <span className="text-blue-500 text-xs mr-1 shrink-0">✓✓</span>
                                 ) : other.status === "online" ? (
-                                <span className="text-gray-400 text-xs mr-1 shrink-0">✓✓</span> // non lu + online = gris double
+                                <span className="text-gray-400 text-xs mr-1 shrink-0">✓✓</span> 
                                    ) : (
-                                   <span className="text-gray-400 text-xs mr-1 shrink-0">✓</span> // non lu + offline = gris simple
+                                   <span className="text-gray-400 text-xs mr-1 shrink-0">✓</span> 
                                    )
                                       ) : null}
                                        </span>
                               )}
 
+                 
                   <span className="truncate inline-block max-w-[160px] align-middle">
                     {lastMsg?.content
                       ? lastMsg.content
@@ -585,10 +641,10 @@ function formatTimeLastMessage(dateString) {
                         : "📎 Fichier"
                       : "Aucun message"}
                   </span>
-                </span>
+                </span>}
                 {lastMsg && (
                   <span className="ml-2 text-xs text-gray-400 dark:text-gray-300 shrink-0 whitespace-nowrap">
-                    {formatTimeLastMessage(lastMsg.updatedAt)}
+                    {formatTimeLastMessage(lastMsg.createdAt)}
                   </span>
                 )}
                 {conv.unreadCount > 0 && !isSelected && isUnread && (
@@ -654,7 +710,7 @@ function formatTimeLastMessage(dateString) {
     <div className="flex-1 overflow-y-auto px-4 py-3" onScroll={handleScroll}>
       {Object.entries(
         messages.reduce((groups, msg) => {
-          const date = new Date(msg.updatedAt);
+          const date = new Date(msg.createdAt);
           const today = new Date();
           const yesterday = new Date();
           yesterday.setDate(today.getDate() - 1);
@@ -681,77 +737,150 @@ function formatTimeLastMessage(dateString) {
           </div>
 
           {/* --- Messages du jour --- */}
-          {msgs.map((msg, i) => {
-            const isSender = msg.sender._id === user.user.id;
-            const isSelected = selectedMessageId === msg._id;
-            return (
-                 <div
-                key={i}
-                onClick={() => isSender && toggleSelectMessage(msg._id)}
-                className={`flex flex-col mb-2 ${isSender ? "items-end" : "items-start"}`}
-              >
+        {msgs.map((msg, i) => {
+          const isSender = msg.sender._id === user.user.id;
+             const isSelected = selectedMessageId === msg._id;
+             const isEditing = editingMessage?._id === msg._id; // ✅ message en cours d'édition
+
+  return (
+    <div key={i}
+      onClick={() => isSender && toggleSelectMessage(msg._id)}
+      className={`flex flex-col mb-2 ${isSender ? "items-end" : "items-start"}`}
+    >
+      <div
+        className={`relative px-4 py-2 rounded-2xl max-w-[80%] break-words shadow-sm cursor-pointer transition ${
+          isSender
+            ? "bg-green-500 text-white rounded-br-none"
+            : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-bl-none"
+        } ${isSelected && isSender ? "ring-2 ring-green-300" : ""}`}
+      >
+        {/* --- Attachments --- */}
+        {msg.attachments?.length > 0 && (
+          <div className="mt-2 flex flex-col gap-2">
+            {msg.attachments.map((att, index) => {
+              const type = att.type;
+              const url = `http://localhost:5000${att.url}`;
+              if (type === "image")
+                return <CustomImageViewer key={index} src={url} alt={att.name} />;
+              if (type === "video") return <CustomVideoPlayer key={index} src={url} />;
+              if (type === "audio") return <CustomAudio key={index} src={url} />;
+              if (type === "pdf")
+                return <CustomPDFViewer key={index} src={url} name={att.name} />;
+              return (
                 <div
-                  className={`relative px-4 py-2 rounded-2xl max-w-[80%] break-words shadow-sm cursor-pointer transition ${
-                    isSender
-                      ? "bg-green-500 text-white rounded-br-none"
-                      : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-bl-none"
-                  } ${isSelected && isSender ? "ring-2 ring-green-300" : ""}`}
+                  key={index}
+                  className="flex items-center gap-2 p-2 bg-gray-200 dark:bg-gray-700 rounded-md"
                 >
-                      {msg.attachments?.length > 0 && (
-                    <div className="mt-2 flex flex-col gap-2">
-                      {msg.attachments.map((att, index) => {
-                        const type = att.type;
-                        const url = `http://localhost:5000${att.url}`;
-
-                        if (type === "image") return <CustomImageViewer key={index} src={url} alt={att.name} />;
-                        if (type === "video") return <CustomVideoPlayer key={index} src={url} />;
-                        if (type === "audio") return <CustomAudio key={index} src={url} />;
-                        if (type === "pdf") return <CustomPDFViewer key={index} src={url} name={att.name} />;
-
-                        return (
-                          <div key={index} className="flex items-center gap-2 p-2 bg-gray-200 dark:bg-gray-700 rounded-md">
-                            <span>📄</span>
-                            <span className="truncate max-w-[120px]">{att.name}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {/* --- Bouton supprimer --- */}
-                  {isSender && isSelected && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation(); // Empêche le clic de désélectionner
-                        handleDeleteMessage(msg._id);
-                        setSelectedMessageId(null);
-                      }}
-                      className="absolute top-1 right-1 text-xs text-white hover:text-red-300 transition"
-                      title="Supprimer le message"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  )}
-
-                  {/* --- Contenu texte --- */}
-                  {msg.content && <p className="text-sm">{msg.content}</p>}
-
-                  {/* --- Heure + Vu --- */}
-                  <div className="flex items-center justify-end mt-1 text-[11px] opacity-80">
-                    <span>{formatTime(msg.updatedAt)}</span>
-                    {isSender && (
-                      <span className="ml-1">
-                        {msg.seen ? (
-                          <span className="text-blue-500">✓✓</span>
-                        ) : (
-                          <span className="text-gray-300 dark:text-gray-400">✓</span>
-                        )}
-                      </span>
-                    )}
-                  </div>
+                  <span>📄</span>
+                  <span className="truncate max-w-[120px]">{att.name}</span>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+        )}
+
+        
+       
+
+        {/* --- Mode édition --- */}
+        {isEditing ? (
+  <div className="flex items-center gap-2 mt-1">
+    {/* Champ d'édition */}
+    <input
+      type="text"
+      value={editContent}
+      onChange={(e) => setEditContent(e.target.value)}
+      className={`w-full px-3 py-1.5 text-sm rounded-xl border outline-none transition-all
+        ${darkMode
+          ? "bg-gray-900 border-gray-700 text-gray-100 focus:ring-2 focus:ring-green-500"
+          : "bg-white border-gray-300 text-gray-800 focus:ring-2 focus:ring-green-400"
+        }`}
+      placeholder="Modifier le message..."
+      autoFocus
+    />
+
+    {/* Boutons d'action */}
+    <div className="flex gap-1">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          handleUpdateMessage(msg._id, editContent);
+        }}
+        className="p-1.5 rounded-full bg-green-500 hover:bg-green-600 text-white transition"
+        title="Enregistrer"
+      >
+        <Check size={16} />
+      </button>
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setEditingMessage(null);
+        }}
+        className="p-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white transition"
+        title="Annuler"
+      >
+        <X size={16} />
+       </button>
+     </div>
+   </div>
+  )  : (
+          msg.content && <p className="text-sm">{msg.content}</p>
+        )}
+
+        {/* --- Heure + Vu --- */}
+       <div className="flex items-center justify-end mt-1 text-[11px] opacity-80 space-x-1">
+  {/* 🕒 Heure */}
+  <span>{formatTime(msg.createdAt)}</span>
+
+ 
+
+  {/* ✓✓ Statut vu */}
+  {isSender && (
+    <span className="ml-1">
+      {msg.seen && selectedUser.status==="online" ? (
+        <span className="text-blue-500">✓✓</span>
+      ) :  selectedUser.status==="online" ?(
+        <span className="text-gray-500 dark:text-gray-100">✓✓</span>
+      ):(
+        <span className="text-gray-500 dark:text-gray-100">✓</span>
+    
+      )}
+    </span>
+  )}
+</div>
+
+      </div>
+       {/* --- Boutons Supprimer / Éditer --- */}
+  {isSender && isSelected && !isEditing && (
+    <div className="flex gap-2 mt-1">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          startEditMessage(msg);
+        }}
+        className="text-yellow-500 hover:text-yellow-400 transition"
+        title="Modifier le message"
+      >
+        <Edit2 size={16} />
+      </button>
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          handleDeleteMessage(msg._id);
+        }}
+        className="text-red-500 hover:text-red-400 transition"
+        title="Supprimer le message"
+      >
+        <Trash2 size={16} />
+      </button>
+    </div>
+  )}
+    </div>
+  );
+})}
+
         </div>
       ))}
 

@@ -130,12 +130,12 @@ export default function Profile() {
       <p className="text-gray-500 dark:text-gray-400 flex items-center gap-2">
         <FaEnvelope className="text-green-500" /> {formData.email}
       </p>
-      <button
+      {/* <button
         onClick={logout}
         className="mt-5 flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-full shadow-lg transition-all"
       >
         <FaTimes /> Déconnexion
-      </button>
+      </button> */}
     </div>
 
     {/* Infos & Sécurité */}
