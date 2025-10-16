@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import { Play, Pause, Volume2, VolumeX, Maximize } from "lucide-react";
 
-export default function CustomVideoPlayer({ src }) {
+export default function CustomVideoPlayer({ src, className = "" }) {
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -48,39 +48,33 @@ export default function CustomVideoPlayer({ src }) {
     setMuted(!muted);
   };
 
-   const handleTimeUpdate = () => {
-    const video = videoRef.current;
-    if (video) {
-      setProgress((video.currentTime / video.duration) * 100);
-      setDuration(video.duration);
-    }
-  };
   const toggleFullScreen = () => {
     const videoContainer = videoRef.current?.parentElement;
     if (!document.fullscreenElement) videoContainer.requestFullscreen();
     else document.exitFullscreen();
   };
 
-  function formatTime(seconds) {
-  if (isNaN(seconds)) return "0:00";
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60).toString().padStart(2, "0");
-  return `${m}:${s}`;
-}
+  const formatTime = (seconds) => {
+    if (isNaN(seconds)) return "0:00";
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
 
   return (
-    <div className="relative group bg-black rounded-2xl overflow-hidden w-full max-w-3xl  mx-auto shadow-2xl">
-      {/* 🎬 Video */}
+    <div
+      className={`relative group bg-black rounded-lg overflow-hidden shadow-md ${className}`}
+    >
+      {/* 🎬 Vidéo */}
       <video
         ref={videoRef}
         src={src}
-        className="w-full h-80 object-contain bg-black"
+        className="w-full h-48 sm:h-64 object-contain bg-black"
         onClick={togglePlay}
-        onTimeUpdate={handleTimeUpdate}
       />
 
-      {/* 🎛️ Controls */}
-      <div className="absolute inset-x-0 bottom-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-4 py-3 ">
+      {/* 🎛️ Contrôles */}
+      <div className="absolute inset-x-0 bottom-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 py-2">
         {/* Barre de progression */}
         <input
           type="range"
@@ -88,51 +82,40 @@ export default function CustomVideoPlayer({ src }) {
           max="100"
           value={progress}
           onChange={handleSeek}
-          className="w-full accent-green-500 cursor-pointer h-1 rounded-full mb-2"
+          className="w-full accent-green-500 cursor-pointer h-1 rounded-full mb-1"
         />
 
-        {/* Boutons */}
-        <div className="flex items-center justify-between text-white text-sm">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={togglePlay}
-              className="p-2 hover:bg-white/20 rounded-full transition"
-            >
-              {isPlaying ? <Pause size={18} /> : <Play size={18} />}
+        <div className="flex items-center justify-between text-white text-xs">
+          <div className="flex items-center gap-2">
+            <button onClick={togglePlay} className="p-1 hover:bg-white/20 rounded-full">
+              {isPlaying ? <Pause size={14} /> : <Play size={14} />}
             </button>
-
-            <button
-              onClick={toggleMute}
-              className="p-2 hover:bg-white/20 rounded-full transition"
-            >
-              {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+            <button onClick={toggleMute} className="p-1 hover:bg-white/20 rounded-full">
+              {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
             </button>
-
-            <span className="text-xs opacity-80">
+            <span className="opacity-80">
               {formatTime((progress / 100) * duration)} / {formatTime(duration)}
             </span>
           </div>
 
           <button
             onClick={toggleFullScreen}
-            className="p-2 hover:bg-white/20 rounded-full transition"
+            className="p-1 hover:bg-white/20 rounded-full"
           >
-            <Maximize size={18} />
+            <Maximize size={14} />
           </button>
         </div>
       </div>
 
-      {/* ▶️ Play Overlay */}
+      {/* ▶️ Overlay Play */}
       {!isPlaying && (
         <button
           onClick={togglePlay}
-          className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/50 transition"
+          className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition"
         >
-          <Play size={60} className="text-white drop-shadow-lg" />
+          <Play size={40} className="text-white drop-shadow-lg" />
         </button>
       )}
     </div>
   );
 }
-
-

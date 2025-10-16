@@ -7,11 +7,13 @@ import { Check, Divide, Edit2, FileText, Image, Music, Search, Trash2, Video } f
 import { Paperclip, X } from "lucide-react";
 import CustomAudio from "./CustomAudio";
 import CustomVideoPlayer from "./CustomVideoPlayer";
+import { motion, AnimatePresence } from "framer-motion";
 import CustomImageViewer from "./CustomImageViewer";
 import CustomPDFViewer from "./CustomPDFViewer";
 import Avatar from "./Avatar";
 import SettingsMenu from "./SettingsMenu";
 import { useTheme } from "../context/ThemeContext";
+import ConversationDetails from "./ConversationDetails";
 
 export default function ChatApp() {
   const { user } = useAuth();
@@ -38,6 +40,7 @@ export default function ChatApp() {
   const messagesEndRef = useRef(null);
   const [editingMessage, setEditingMessage] = useState(null);
   const [editContent, setEditContent] = useState("");
+  const [showConversationDetails,setShowConversationDetails]=useState()
 
   const usersFiltered=users.filter(u=>u.username.toLowerCase().includes(query.toLowerCase()))
 
@@ -59,7 +62,7 @@ const totalUnread = unreadConvs.length;
     setEditContent("");
   };
 
-   // 🔹 Sauvegarder les changements
+
   
 
 
@@ -115,7 +118,7 @@ const scrollToBottom = () => {
       return new Date(dateB) - new Date(dateA);
     });
 
-    setConversations(sorted);
+    setConversations(sorted.filter((c)=>c.lastMessage));
   } catch (err) {
     console.error(err);
   }
@@ -380,6 +383,7 @@ const scrollToBottom = () => {
     setMessage("");
     setAttachments([]);
     setAttachmentsPreview([] );
+    loadConversations()
 
      // vider après envoi
   };
@@ -545,7 +549,9 @@ function formatTimeLastMessage(dateString) {
             usersFiltered.map((u) => (
               <li
                 key={u._id}
-                onClick={() => setSelectedUser(u)}
+                onClick={() =>{
+                    setShowConversationDetails(false)
+                     setSelectedUser(u)}}
                 className="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition"
               >
                 <Avatar
@@ -598,6 +604,7 @@ function formatTimeLastMessage(dateString) {
             onClick={() =>{
                  setSelectedUser(other)
                  loadConversations()
+                setShowConversationDetails(false)
             }}
             className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors
               ${isSelected
@@ -724,16 +731,20 @@ function formatTimeLastMessage(dateString) {
 
 {/* --- 💬 CHAT ZONE --- */}
 {selectedUser ? (
-  <div className="flex flex-col h-full md:w-3/4 w-full bg-gray-100 dark:bg-gray-900">
+  <div className={`flex flex-col h-full md:w-3/4 w-full bg-gray-100 dark:bg-gray-900 ${showConversationDetails ? "hidden":""}`}>
 
     {/* --- HEADER FIXE --- */}
-    <div className="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 border-b dark:border-gray-700 shadow-sm sticky top-0 z-20">
+    <div
+    onClick={()=>setShowConversationDetails(true)}
+     className="flex items-center gap-3 cursor-pointer p-4 bg-white dark:bg-gray-800 border-b dark:border-gray-700 shadow-sm sticky top-0 z-20"
+    >
       {isMobileView && (
         <IoArrowBack
-          className="cursor-pointer text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white"
+          className=" text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white"
           size={24}
           onClick={() =>{ 
             setSelectedUser(null)
+            setShowConversationDetails(false)
              loadConversations()}}
         />
       )}
@@ -814,12 +825,14 @@ function formatTimeLastMessage(dateString) {
             {msg.attachments.map((att, index) => {
               const type = att.type;
               const url = `http://localhost:5000${att.url}`;
+                const messageAttachmentStyle = "max-w-[220px] sm:max-w-[250px] rounded-lg overflow-hidden mt-2 shadow-sm border border-gray-300 dark:border-gray-700";
+
               if (type === "image")
-                return <CustomImageViewer key={index} src={url} alt={att.name} />;
-              if (type === "video") return <CustomVideoPlayer key={index} src={url} />;
+                return <CustomImageViewer key={index} src={url} alt={att.name} className={messageAttachmentStyle} />;
+              if (type === "video") return <CustomVideoPlayer key={index} src={url} className={messageAttachmentStyle} />;
               if (type === "audio") return <CustomAudio key={index} src={url} />;
               if (type === "pdf")
-                return <CustomPDFViewer key={index} src={url} name={att.name} />;
+                return <CustomPDFViewer key={index} src={url} name={att.name} className="max-w-[250px] mt-2"  />;
               return (
                 <div
                   key={index}
@@ -1054,6 +1067,31 @@ function formatTimeLastMessage(dateString) {
   </div>
 </div>
 ) : ""}
+
+<AnimatePresence>
+  {showConversationDetails && selectedUser && (
+    <motion.div
+      initial={{ x: "100%", opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: "100%", opacity: 0 }}
+      transition={{ type: "spring", stiffness: 80, damping: 15 }}
+      className="absolute inset-0 md:relative md:w-3/4 bg-white dark:bg-gray-900 z-40 border-l dark:border-gray-700 overflow-y-auto"
+    >
+      {/* Bouton de fermeture visible sur mobile */}
+      <div className="absolute top-3 right-3 z-10">
+        <button
+          onClick={() => setShowConversationDetails(false)}
+          className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+        >
+          ✕
+        </button>
+      </div>
+
+      <ConversationDetails otherUser={selectedUser} />
+    </motion.div>
+  )}
+</AnimatePresence>
+
     </div>
 
   );

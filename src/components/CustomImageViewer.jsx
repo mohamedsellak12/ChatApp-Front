@@ -1,20 +1,20 @@
 import { useState } from "react";
 import { X, Maximize2 } from "lucide-react";
 
-export default function CustomImageViewer({ src, alt }) {
+export default function CustomImageViewer({ src, alt, className = "" }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      {/* 🖼️ Miniature dans le chat */}
+      {/* 🖼️ Miniature (cliquable) */}
       <div
         onClick={() => setIsOpen(true)}
-        className="relative cursor-pointer group"
+        className={`relative cursor-pointer group ${className}`}
       >
         <img
           src={src}
           alt={alt}
-          className="rounded-lg object-cover w-full h-full sm:w-48 sm:h-48 transition-transform duration-200 group-hover:scale-105 shadow-md"
+          className="rounded-lg object-cover w-full h-full transition-transform duration-200 group-hover:scale-105 shadow-md"
         />
 
         {/* 🔍 Icône zoom au survol */}
@@ -23,7 +23,7 @@ export default function CustomImageViewer({ src, alt }) {
         </div>
       </div>
 
-      {/* 🪟 Vue plein écran (lightbox) */}
+      {/* 🪟 Lightbox plein écran */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-4"
@@ -31,7 +31,10 @@ export default function CustomImageViewer({ src, alt }) {
         >
           <button
             className="absolute top-4 right-4 text-white bg-black/50 hover:bg-black/70 rounded-full p-2 transition"
-            onClick={() => setIsOpen(false)}
+            onClick={(e) => {
+              e.stopPropagation(); // évite la fermeture au clic sur le bouton
+              setIsOpen(false);
+            }}
           >
             <X size={20} />
           </button>
