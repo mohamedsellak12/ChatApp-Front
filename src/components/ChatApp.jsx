@@ -108,7 +108,7 @@ const uniqueStories = Object.values(
 );
 
 const lastStory = UserStories.length > 0 
-  ? UserStories[ 0] 
+  ? UserStories[ UserStories.length-1] 
   : null;
 
  const handleSelectUser = (userId) => {
@@ -259,7 +259,7 @@ const lastStory = UserStories.length > 0
 
     socket.on("newStory", (story) =>{
         setStories(prev => [...prev, story ])  
-        setUserStories(prev=>[...prev,story])
+        setUserStories(prev=>[story,...prev])
         loadStories()
         if(user.user.id!=story.user._id){
 
@@ -571,6 +571,13 @@ function formatTimeLastMessage(dateString) {
   };
 
 
+const hasSeenAllStories = stories.length > 0 && stories.every(story =>
+  story.viewers?.some(v => v.user.toString() === user.user.id)
+);
+
+
+
+
   return (
    <div  className="flex flex-col md:flex-row h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
     
@@ -669,10 +676,13 @@ function formatTimeLastMessage(dateString) {
     className={`flex-1 flex items-center justify-center gap-2 p-2 text-sm font-medium transition
       ${viewList === "stories"
         ? "border-b-2 border-green-500 text-green-700 dark:text-green-200"
-        : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+        : hasSeenAllStories
+          ? "text-green-400 dark:text-gray-500"
+          : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
       }`}
     onClick={() => setViewList("stories")}
   >
+    <div className="relative">
     <CircleDashed
       size={24}
       className={`${
@@ -681,6 +691,12 @@ function formatTimeLastMessage(dateString) {
           : "text-gray-500 dark:text-gray-400"
       }`}
     />
+
+    { !hasSeenAllStories &&  <span className="absolute -top-0.5 -right-0.5 bg-green-500  font-bold rounded-lg w-3 h-3 flex items-center justify-center">
+      </span>}
+    </div>
+
+    
   </button>
 </div>
 
