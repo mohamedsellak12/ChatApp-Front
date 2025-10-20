@@ -6,6 +6,8 @@ import Profile from "./pages/Profile";
 import { Toaster } from "react-hot-toast";
 import ChatApp from "./components/ChatApp";
 
+import "./App.css"
+
 function App() {
   const { user } = useAuth();
 

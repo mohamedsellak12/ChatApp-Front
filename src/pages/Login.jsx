@@ -35,38 +35,39 @@ export default function Login() {
   return (
  <div className="flex flex-col md:flex-row min-h-screen">
 
-  {/* Right side - illustration */}
-  <div className="md:flex-1 bg-gradient-to-tr from-green-400 to-green-600 dark:from-gray-800 dark:to-gray-900 flex flex-col items-center justify-center p-6 hidden md:flex relative overflow-hidden transition-colors duration-300">
-    {/* Halo lumineux en arrière-plan */}
-    <div className="absolute inset-0 bg-gradient-to-br from-green-300 via-green-500 to-green-700 dark:from-gray-700 dark:via-gray-800 dark:to-gray-900 opacity-30 blur-3xl animate-pulse"></div>
+  {/* 💚 Right side (logo + slogan desktop) */}
+<div className="md:flex-1 bg-gradient-to-tr from-indigo-500 to-purple-600 dark:from-gray-800 dark:to-gray-900 flex flex-col items-center justify-center p-6 hidden md:flex relative overflow-hidden transition-colors duration-300">
+  {/* Halo lumineux en arrière-plan */}
+  <div className="absolute inset-0 bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-600 dark:from-gray-700 dark:via-gray-800 dark:to-gray-900 opacity-30 blur-3xl animate-pulse"></div>
 
-    {/* Logo et slogan */}
-    <div className="relative text-center z-10">
-      {/* Logo principal */}
-      <h1 className="text-6xl font-extrabold text-white dark:text-green-400 drop-shadow-lg tracking-wide">
-        Chat<span className="text-green-100 dark:text-green-200">App</span>
-      </h1>
+  {/* Logo et slogan */}
+  <div className="relative text-center z-10">
+    {/* Logo principal */}
+    <h1 className="text-6xl font-extrabold text-white dark:text-indigo-400 drop-shadow-lg tracking-wide">
+      On<span className="text-purple-200 dark:text-purple-300">Talk</span>
+    </h1>
 
-      {/* Ligne décorative */}
-      <div className="mt-3 w-16 h-1 bg-white dark:bg-green-200 mx-auto rounded-full"></div>
+    {/* Ligne décorative */}
+    <div className="mt-3 w-16 h-1 bg-white dark:bg-purple-300 mx-auto rounded-full"></div>
 
-      {/* Slogan */}
-      <p className="mt-6 text-white dark:text-gray-200 text-lg font-light max-w-sm mx-auto leading-relaxed">
-        Discutez librement, connectez-vous instantanément 💬  
-        <br />Votre monde, en un seul chat.
-      </p>
+    {/* Slogan */}
+    <p className="mt-6 text-white dark:text-gray-200 text-lg font-light max-w-sm mx-auto leading-relaxed">
+      Parlez librement, partagez instantanément 💬  
+      <br />Vos conversations, réinventées.
+    </p>
 
-      {/* Icônes décoratives */}
-      <div className="flex justify-center gap-4 mt-6 text-white dark:text-gray-300 text-2xl opacity-80">
-        <i className="fab fa-whatsapp"></i>
-        <i className="fas fa-comments"></i>
-        <i className="fas fa-bolt"></i>
-      </div>
+    {/* Icônes décoratives */}
+    <div className="flex justify-center gap-4 mt-6 text-white dark:text-gray-300 text-2xl opacity-80">
+      <i className="fas fa-comments"></i>
+      <i className="fas fa-bolt"></i>
+      <i className="fas fa-signal"></i>
     </div>
   </div>
+</div>
+
 
   {/* Right side - form */}
-  <div className="md:flex-1 flex items-center justify-center p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+  <div className="md:flex-1 flex min-h-screen items-center justify-center p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
     <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-10 relative overflow-hidden transition-colors duration-300">
       <h2 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-6 text-center">Bienvenue</h2>
       <p className="text-center text-gray-500 dark:text-gray-300 mb-8">

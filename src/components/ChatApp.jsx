@@ -1,9 +1,10 @@
 import React,{ useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
+import axios from "axios";
 import { IoArrowBack, IoSettingsOutline } from "react-icons/io5";
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
-import { Check, Divide, Edit2, FileText, Image, Music, Search, Trash2, Video } from "lucide-react";
+import { Check, CircleDashed, Divide, Edit2, FileText, Image, MessageCircle, Music, PlusCircle, Search, Trash2, Users, Video } from "lucide-react";
 import { Paperclip, X } from "lucide-react";
 import CustomAudio from "./CustomAudio";
 import CustomVideoPlayer from "./CustomVideoPlayer";
@@ -14,16 +15,19 @@ import Avatar from "./Avatar";
 import SettingsMenu from "./SettingsMenu";
 import { useTheme } from "../context/ThemeContext";
 import ConversationDetails from "./ConversationDetails";
+import toast from "react-hot-toast";
+import StoryViewer from "./StoryViewer";
+import UserStoriesList from "./UserStoriesList";
+// import Stories from "./Stories";
 
 export default function ChatApp() {
   const { user } = useAuth();
   const socketRef = useRef(null);
   const { darkMode } = useTheme();
-
-
   const [users, setUsers] = useState([]);
   const [conversations, setConversations] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUserStories , setSelectedUserStories] = useState(null);
   const [currentConversationId, setCurrentConversationId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
@@ -34,13 +38,20 @@ export default function ChatApp() {
   const [attachments, setAttachments] = useState([]);
   const [attachmentsPreview, setAttachmentsPreview] = useState([]);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [showAllUserStories, setShowAllUserStories] = useState(false);
   const typingTimeoutRef = useRef(null);
   const isTypingRef = useRef(false);
   const prevConversationRef = useRef(null);
   const messagesEndRef = useRef(null);
   const [editingMessage, setEditingMessage] = useState(null);
   const [editContent, setEditContent] = useState("");
-  const [showConversationDetails,setShowConversationDetails]=useState()
+  const [showConversationDetails,setShowConversationDetails]=useState();
+  const [preview, setPreview] = useState(null);
+  const [media, setMedia] = useState(null);
+  const [stories, setStories] = useState([]);
+  const [UserStories, setUserStories] = useState([]);
+  const [caption, setCaption] = useState("");
+
 
   const usersFiltered=users.filter(u=>u.username.toLowerCase().includes(query.toLowerCase()))
 
@@ -86,6 +97,29 @@ const scrollToBottom = () => {
   messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 };
 
+const uniqueStories = Object.values(
+  stories.reduce((acc, story) => {
+    // Garde la story la plus récente pour chaque user
+    if (!acc[story.user._id] || new Date(story.createdAt) > new Date(acc[story.user._id].createdAt)) {
+      acc[story.user._id] = story;
+    }
+    return acc;
+  }, {})
+);
+
+const lastStory = UserStories.length > 0 
+  ? UserStories[ 0] 
+  : null;
+
+ const handleSelectUser = (userId) => {
+    const userStories = stories
+      .filter(story => story.user._id === userId)
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); // ordre chronologique
+
+      loadStories()
+    setSelectedUserStories(userStories);
+  };
+
   // Charger users & conversations
   const loadUsers = async () => {
     if (!user?.token) return;
@@ -98,6 +132,30 @@ const scrollToBottom = () => {
       setUsers(data.filter(u => u._id !== user.user._id));
     } catch (err) {
       console.error(err);
+    }
+  };
+
+   const loadStories = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/stories/all", {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      setStories(res.data);
+      
+    } catch (err) {
+      console.error("Erreur load stories:", err);
+    }
+  };
+
+   const loadUserStories = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/stories/mine", {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      setUserStories(res.data);
+      
+    } catch (err) {
+      console.error("Erreur load stories:", err);
     }
   };
 
@@ -117,7 +175,6 @@ const scrollToBottom = () => {
       const dateB = b.lastMessage?.createdAt || b.createdAt;
       return new Date(dateB) - new Date(dateA);
     });
-
     setConversations(sorted.filter((c)=>c.lastMessage));
   } catch (err) {
     console.error(err);
@@ -128,6 +185,9 @@ const scrollToBottom = () => {
   useEffect(() => {
     loadUsers();
     loadConversations();
+    loadStories();
+    loadUserStories()
+    console.log("My stories :"+UserStories)
   }, [user?.token]);
   
 
@@ -195,11 +255,18 @@ const scrollToBottom = () => {
         const other = prev.filter(c => c._id !== msg.conversation);
         const updated = prev.find(c => c._id === msg.conversation);
         return updated ? [updated, ...other] : prev;
-      });
-      
-    //   loadConversations()
+      });});
 
-    });
+    socket.on("newStory", (story) =>{
+        setStories(prev => [...prev, story ])  
+        setUserStories(prev=>[...prev,story])
+        loadStories()
+        if(user.user.id!=story.user._id){
+
+            toast.success(`${story.user.username} ajoute une story`)
+        }
+    })
+ 
     
     socket.on("conversationUpdated", () => {
       loadConversations();
@@ -225,6 +292,21 @@ const scrollToBottom = () => {
         : c
     )
   );
+});
+
+socket.on("storyViewedByUser", ({ storyId, viewerId }) => {
+  setStories(prev =>
+    prev.map(story =>
+      story._id === storyId
+        ? { ...story, viewers: [...(story.viewers || []), { user: viewerId, viewedAt: new Date() }] }
+        : story
+    )
+  );
+ 
+    if(user.user.id!=viewerId){
+
+            toast.success(` ${viewerId} Voir une story`)
+        }
 });
 
  socket.on("messageDeleted", (messageId) => {
@@ -391,6 +473,47 @@ const scrollToBottom = () => {
   socketRef.current?.emit("deleteMessage", { messageId: msgId });
 
 };
+
+ const handleAddStory = async () => {
+  if (!media) return;
+
+  try {
+    const formData = new FormData();
+    formData.append("file", media);
+    formData.append("caption", caption);
+
+    // ✅ Déterminer le type par extension
+    const ext = media.name.split(".").pop().toLowerCase();
+    let type = "image"; // par défaut
+
+    if (["mp4", "mov", "avi", "mkv", "webm"].includes(ext)) {
+      type = "video";
+    } else if (["png", "jpg", "jpeg", "gif", "webp"].includes(ext)) {
+      type = "image";
+    }
+
+    const uploadRes = await axios.post(
+      "http://localhost:5000/api/upload/storie",
+      formData,
+      {
+        headers: { Authorization: `Bearer ${user.token}` },
+      }
+    );
+
+    const mediaUrl = uploadRes.data.url;
+
+    socketRef.current?.emit("addStory", { mediaUrl, type, caption: caption });
+
+    setMedia(null);
+    setPreview(null);
+    loadStories();
+    loadUserStories();
+  } catch (err) {
+    console.error("Erreur ajout story:", err);
+  }
+};
+
+
 const handleUpdateMessage = () => {
     if (!editingMessage || !editContent.trim()) return;
 
@@ -476,15 +599,6 @@ function formatTimeLastMessage(dateString) {
         />
       </svg>
 
-      {/* Petite bulle de chat interne */}
-      {/* <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="white"
-        viewBox="0 0 24 24"
-        className="absolute bottom-[3px] right-[3px] w-2.5 h-2.5 opacity-90"
-      >
-        <path d="M2 8a6 6 0 016-6h8a6 6 0 016 6v4a6 6 0 01-6 6H9l-4 3v-3a6 6 0 01-3-6V8z" />
-      </svg> */}
     </span>
 
     {/* --- Nom stylisé --- */}
@@ -502,31 +616,71 @@ function formatTimeLastMessage(dateString) {
 
    {/* --- Onglets --- */}
 <div className="flex border-b border-gray-200 dark:border-gray-700">
-  <button
-    className={`flex-1 p-2 text-sm font-medium transition 
-      ${viewList === "users" 
-        ? "border-b-2 border-green-500 text-green-700 dark:text-green-200" 
-        : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-      }`}
-    onClick={() => {
-        loadUsers()
-        setViewList("users")}}
-  >
-    Utilisateurs
-  </button>
+ <button
+  className={`flex-1 p-2 text-sm font-medium flex items-center justify-center gap-2 transition 
+    ${viewList === "users" 
+      ? "border-b-2 border-green-500 text-green-700 dark:text-green-200" 
+      : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+    }`}
+  onClick={() => {
+    loadUsers();
+    setViewList("users");
+  }}
+>
+  <Users size={24} className="w-5 h-5" />
+</button>
 
-  <button
-    className={`flex-1 p-2 text-sm font-medium transition 
-      ${viewList === "conversations" 
-        ? "border-b-2 border-green-500 text-green-700 dark:text-green-200" 
+  
+<button
+  className={`flex-1 flex items-center justify-center gap-2 p-2 text-sm font-medium relative transition
+    ${viewList === "conversations"
+      ? "border-b-2 border-green-500 text-green-700 dark:text-green-200"
+      : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+    }`}
+  onClick={() => {
+    loadConversations();
+    setViewList("conversations");
+  }}
+>
+  {/* Icône avec badge */}
+  <div className="relative">
+    <MessageCircle
+      size={24}
+      className={`${
+        viewList === "conversations"
+          ? "text-green-600 dark:text-green-300"
+          : "text-gray-500 dark:text-gray-400"
+      }`}
+    />
+
+    {totalUnread > 0 && (
+      <span className="absolute -top-1 -right-1 bg-green-500 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+        {totalUnread > 9 ? "9+" : totalUnread}
+      </span>
+    )}
+  </div>
+
+  {/* <span>Conversations</span> */}
+</button>
+
+
+
+<button
+    className={`flex-1 flex items-center justify-center gap-2 p-2 text-sm font-medium transition
+      ${viewList === "stories"
+        ? "border-b-2 border-green-500 text-green-700 dark:text-green-200"
         : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
       }`}
-    onClick={() =>{
-        loadConversations()
-        setViewList("conversations")
-    } }
+    onClick={() => setViewList("stories")}
   >
-    Conversations {totalUnread > 0 && <span>({totalUnread})</span>}
+    <CircleDashed
+      size={24}
+      className={`${
+        viewList === "stories"
+          ? "text-green-600 dark:text-green-300"
+          : "text-gray-500 dark:text-gray-400"
+      }`}
+    />
   </button>
 </div>
 
@@ -725,13 +879,225 @@ function formatTimeLastMessage(dateString) {
   </ul>
 )}
 
+{viewList === "stories" && (
+     <div className="flex flex-col h-full border-l bg-white dark:bg-gray-900 text-black dark:text-white">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+     
+        <div  className="flex items-center gap-4">
+              {lastStory ?
+               (
+      <div className="relative"  >
+        {lastStory.media.type === "image" ? (
+          <img
+          onClick={()=>setShowAllUserStories(true)}
+            src={lastStory.media.url}
+            alt="Ma story"
+            className="w-14 h-14 rounded-full object-cover border-2 border-blue-500 cursor-pointer hover:scale-105 transition"
+            title={lastStory.caption || "Ma story"}
+          />
+        ) : 
+        (
+          <video
+          onClick={()=>setShowAllUserStories(true)}
+            src={lastStory.media.url}
+            className="w-12 h-12 rounded-full object-cover border-2 border-blue-500 cursor-pointer hover:scale-105 transition"
+            muted
+          />
+        )}
+
+         <label className="cursor-pointer absolute bottom-0 right-0 bg-green-500 rounded-full flex items-center gap-1 text-gray-100 hover:text-blue-600">
+          <PlusCircle size={20} />
+          <input
+            type="file"
+            accept="image/*,video/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files[0];
+              setMedia(file);
+              setPreview(URL.createObjectURL(file));
+            }}
+          />
+        </label>
+     
+        {/* <span className="absolute bottom-0 right-0 bg-green-500 w-3 h-3 rounded-full border border-white"></span> */}
+      </div>
+    ):
+    <div className="relative w-14 h-14">
+    <Avatar
+    src={user.user.avatar? `http://localhost:5000${user.user.avatar}` : '/image.png'}
+    alt={user.user.username}
+    className="w-14 h-14 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
+    />
+      <label className="cursor-pointer absolute bottom-0 right-0 bg-green-500 rounded-full flex items-center gap-1 text-gray-100 hover:text-blue-600">
+          <PlusCircle size={20} />
+          <input
+            type="file"
+            accept="image/*,video/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files[0];
+              setMedia(file);
+              setPreview(URL.createObjectURL(file));
+            }}
+          />
+       </label>
+    </div>
+
+    }
+       
+       
+        </div>
+      </div>
+
+      {showAllUserStories &&<UserStoriesList stories={UserStories} onClose={()=>setShowAllUserStories(false)}/>}
+    
+      {/* Preview avant ajout */}
+     {preview && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-lg p-4 w-[90%] max-w-md">
+      {/* ❌ Bouton fermer */}
+      <button
+        onClick={() => {
+          setPreview(null);
+          setMedia(null);
+        }}
+        className="absolute top-3 right-3 text-gray-500 hover:text-red-500"
+      >
+        ✕
+      </button>
+
+      {/* 🖼️ Aperçu */}
+      <div className="mt-6">
+        {(() => {
+          const ext = media.name.split(".").pop().toLowerCase();
+          const isVideo = ["mp4", "mov", "avi", "mkv", "webm"].includes(ext);
+          return isVideo ? (
+            <video
+              src={preview}
+              controls
+              className="rounded-lg w-full h-80 object-cover"
+            />
+          ) : (
+            <img
+              src={preview}
+              alt="preview"
+              className="rounded-lg w-full h-80 object-cover"
+            />
+          );
+        })()}
+      </div>
+      {/* 📝 Champ légende optionnelle */}
+      <textarea
+        placeholder="Ajoutez une légende (optionnel)..."
+        value={caption}
+        onChange={(e) => setCaption(e.target.value)}
+        className="w-full resize-none mt-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 p-3 text-sm transition"
+        rows={2}
+      ></textarea>
+
+      {/* 🩵 Bouton publier */}
+      <button
+        onClick={handleAddStory}
+        className="mt-4 w-full py-2 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 transition"
+      >
+        Publier la story
+      </button>
+    </div>
+  </div>
+)}
+
+    
+      {/* Liste des stories scrollable */}
+    <div className="flex-1 overflow-y-auto p-3 space-y-4">
+  {stories.length === 0 ? (
+    <p className="text-gray-400 text-center mt-10">
+      Aucune story disponible
+    </p>
+  ) : 
+  (
+    uniqueStories.map((story) => {
+      const hasViewed = story.viewers?.some(
+        (v) => v.user === user.user.id 
+      );
+
+      return (
+        <div
+          key={story._id}
+          className="flex items-center gap-3 p-2 rounded-lg cursor-pointer transition hover:bg-gray-50 dark:hover:bg-gray-800"
+          onClick={() => handleSelectUser(story.user._id)}
+        >
+          {/* 🟣 Avatar avec contour dynamique */}
+          <div
+            className={`relative flex items-center justify-center rounded-full p-[2px] ${
+              hasViewed
+                ? "bg-gray-400" // vue
+                : "bg-gradient-to-tr from-pink-500 via-purple-500 to-yellow-500" // non vue
+            }`}
+          >
+            <Avatar
+              src={
+                story.user.avatar
+                  ? `http://localhost:5000${story.user.avatar}`
+                  : "/image.png"
+              }
+              alt={story.user.username}
+              className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-900"
+            />
+            {hasViewed && (
+              <span className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 rounded-full border border-white"></span>
+            )}
+          </div>
+
+          {/* 🧾 Infos utilisateur */}
+          <div className="flex-1">
+            <p className="font-medium">{story.user.username}</p>
+            {story.media.type === "image" ? (
+              <Image size={16} className="text-gray-400" />
+            ) : (
+              <Video size={16} className="text-gray-400" />
+            )}
+          </div>
+
+          {/* 📷 Miniature (image ou vidéo) */}
+          {story.media.type === "image" ? (
+            <img
+              src={story.media.url}
+              alt="story"
+              className="w-12 h-12 object-cover rounded-md border border-gray-300"
+            />
+          ) : (
+            <video
+              src={story.media.url}
+              className="w-12 h-12 object-cover rounded-md border border-gray-300"
+            />
+          )}
+        </div>
+      );
+    })
+  )}
+</div>
+
+       {/* affichage des stories */}
+         {selectedUserStories && (
+       
+        <StoryViewer 
+         stories={selectedUserStories} 
+         onClose={()=>setSelectedUserStories(null)}
+         socketRef={socketRef}
+         />
+      )}
+    </div>
+)}
+
+
   </div>
 )}
 
 
 {/* --- 💬 CHAT ZONE --- */}
 {selectedUser ? (
-  <div className={`flex flex-col h-full md:w-3/4 w-full bg-gray-100 dark:bg-gray-900 ${showConversationDetails ? "hidden":""}`}>
+  <div className={` flex-col h-full md:w-3/4 w-full bg-gray-100 dark:bg-gray-900 ${showConversationDetails ? "hidden block":"flex"}`}>
 
     {/* --- HEADER FIXE --- */}
     <div
@@ -836,7 +1202,7 @@ function formatTimeLastMessage(dateString) {
               return (
                 <div
                   key={index}
-                  className="flex items-center gap-2 p-2 bg-gray-200 dark:bg-gray-700 rounded-md"
+                  className="flex items-center gap-2 p-2 m-2 bg-gray-200 dark:bg-gray-700 rounded-md"
                 >
                   <span>📄</span>
                   <span className="truncate max-w-[120px]">{att.name}</span>
@@ -907,7 +1273,7 @@ function formatTimeLastMessage(dateString) {
   {/* ✓✓ Statut vu */}
   {isSender && (
     <span className="ml-1">
-      {msg.seen && selectedUser.status==="online" ? (
+      {msg.seen  ? (
         <span className="text-blue-500">✓✓</span>
       ) :  selectedUser.status==="online" ?(
         <span className="text-gray-500 dark:text-gray-100">✓✓</span>
@@ -1007,6 +1373,7 @@ function formatTimeLastMessage(dateString) {
         <Paperclip className="text-gray-600 dark:text-gray-300" size={20} />
         <input type="file" multiple onChange={handleFileChange} className="hidden" />
       </label>
+      
 
       <input
         type="text"
@@ -1083,7 +1450,7 @@ function formatTimeLastMessage(dateString) {
           onClick={() => setShowConversationDetails(false)}
           className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
         >
-          ✕
+          <X size={20}/>
         </button>
       </div>
 
